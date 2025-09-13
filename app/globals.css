@@ -1,0 +1,18 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+:root { color-scheme: light; }
+
+
+/* Layout skeleton */
+.container { @apply mx-auto max-w-[1280px] px-6; }
+.card { @apply rounded-2xl bg-white shadow-card border border-gray-100; }
+.badge { @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium; }
+.input { @apply w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand/30; }
+.btn { @apply inline-flex items-center gap-2 rounded-xl bg-brand px-3 py-2 text-sm font-medium text-white hover:bg-blue-600 active:translate-y-[1px]; }
+.link-muted { @apply text-gray-500 hover:text-gray-700; }
+
+
+body { @apply bg-gray-50 text-gray-900; }
