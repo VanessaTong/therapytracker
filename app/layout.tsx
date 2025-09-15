@@ -1,24 +1,22 @@
+// app/layout.tsx
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
-import Sidebar from '@/components/Sidebar'
+// Rename for clarity — the default export is an AppShell that expects children
+import AppShell from '@/components/Sidebar'
 
 export const metadata: Metadata = {
   title: 'TherapyTracker',
   description: 'Mental Health Dashboard',
 }
 
-// Ensures proper initial scale on mobile
 export const viewport: Viewport = { width: 'device-width', initialScale: 1 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <body>
-        {/* Stacks on mobile, sidebar+content grid on md+ */}
-        <div className="min-h-screen flex flex-col md:grid md:grid-cols-[260px_1fr]">
-          <Sidebar />
-          <main className="bg-gray-50 flex-1">{children}</main>
-        </div>
+        {/* AppShell (exported from components/Sidebar.tsx) needs children */}
+        <AppShell>{children}</AppShell>
       </body>
     </html>
   )
