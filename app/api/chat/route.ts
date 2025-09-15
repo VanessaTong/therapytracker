@@ -30,7 +30,7 @@ export async function POST(req: Request) {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 45_000);
 
-    const base = process.env.FASTAPI_BASE_URL ?? 'http://0.0.0.0:8000';
+    const base = process.env.FASTAPI_BASE_URL ?? 'https://therapy-api-446856640264.asia-northeast1.run.app';
     const url = `${base.replace(/\/$/, '')}/agents/chat`;
 
     const upstream = await fetch(url, {
@@ -51,7 +51,7 @@ export async function POST(req: Request) {
         { status: 502, headers: { 'content-type': 'application/json' } }
       );
     }
-    
+
     const data = (await upstream.json().catch(() => ({}))) as {
         response?: string;
         handoff?: string | null;

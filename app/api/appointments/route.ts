@@ -1,5 +1,5 @@
 export const runtime = 'nodejs';
-// app/api/appointments/route.ts
+export const dynamic = 'force-dynamic';
 import { NextResponse } from "next/server";
 import { getPool } from "@/lib/db";
 
