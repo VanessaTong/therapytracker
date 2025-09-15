@@ -1,22 +1,85 @@
-import { NextResponse } from 'next/server'
+// app/api/chat/route.ts
+// Proxies your Next.js app to the FastAPI endpoint at /agents/chat
+// FastAPI contract: { question: string } -> { response: string, handoff?: string }
 
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
-// Placeholder route. In production, forward to your FastAPI server.
-// Example FastAPI URL (set in .env as FASTAPI_URL="https://your-fastapi.app")
-// This route currently returns a mock response to keep the UI functional on Vercel.
-
+function safePick<T = any>(v: T, ...keys: string[]) {
+  const obj = v as any;
+  for (const k of keys) {
+    if (obj && typeof obj === 'object' && k in obj && obj[k] != null) return obj[k];
+  }
+  return undefined;
+}
 
 export async function POST(req: Request) {
-const { message } = await req.json()
+  try {
+    const body = await req.json().catch(() => ({} as any));
 
+    // Ensure we send exactly what FastAPI expects: { question: string }
+    const question =
+      typeof body?.question === 'string'
+        ? body.question
+        : typeof body?.message === 'string'
+        ? body.message
+        : '';
 
-// If you want to proxy to FastAPI, uncomment below and deploy with FASTAPI_URL
-// const url = `${process.env.FASTAPI_URL}/chat` // e.g., POST expects {message}
-// const fastapi = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message }) })
-// const data = await fastapi.json()
-// return NextResponse.json(data)
+    const payload = { question };
 
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 45_000);
 
-// Mock fallback
-return NextResponse.json({ reply: `You said: "${message}". (This is a placeholder—wire me to FastAPI in app/api/chat/route.ts)` })
+    const base = process.env.FASTAPI_BASE_URL ?? 'http://0.0.0.0:8000';
+    const url = `${base.replace(/\/$/, '')}/agents/chat`;
+
+    const upstream = await fetch(url, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(payload),
+      signal: controller.signal,
+    }).finally(() => clearTimeout(timeout));
+
+    if (!upstream.ok) {
+      const text = await upstream.text().catch(() => '');
+      return new Response(
+        JSON.stringify({
+          error: 'FastAPI upstream error',
+          status: upstream.status,
+          details: text,
+        }),
+        { status: 502, headers: { 'content-type': 'application/json' } }
+      );
+    }
+    
+    const data = (await upstream.json().catch(() => ({}))) as {
+        response?: string;
+        handoff?: string | null;
+        [k: string]: any;
+    };
+
+    const reply =
+        safePick(data, 'response') ??
+        safePick(data, 'reply', 'message', 'output', 'text') ??
+        '' as string;
+
+    return new Response(JSON.stringify({ reply }), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    });
+  } catch (err: any) {
+    return new Response(
+      JSON.stringify({
+        error: 'Proxy failed',
+        details: String(err?.message ?? err),
+      }),
+      { status: 500, headers: { 'content-type': 'application/json' } }
+    );
+  }
+}
+
+export async function GET() {
+  return new Response(JSON.stringify({ ok: true }), {
+    headers: { 'content-type': 'application/json' },
+  });
 }

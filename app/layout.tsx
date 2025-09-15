@@ -7,7 +7,6 @@ export const metadata: Metadata = {
   description: 'Mental Health Dashboard',
 }
 
-// Ensures proper initial scale on mobile
 export const viewport: Viewport = { width: 'device-width', initialScale: 1 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

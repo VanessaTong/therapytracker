@@ -11,9 +11,9 @@ export type Patient = {
     
     
     export const patients: Patient[] = [
-    { id: 'sarah-johnson', name: 'Sarah Johnson', email: 'sarah.johnson@email.com', phone: '(555) 123-4567', dob: '1988-03-15', lastSession: '1/10/2024', score: 7, active: true },
-    { id: 'michael-chen', name: 'Michael Chen', email: 'michael.chen@email.com', phone: '(555) 234-5678', dob: '1990-07-21', lastSession: '1/8/2024', score: 5, active: true },
-    { id: 'emma-davis', name: 'Emma Davis', email: 'emma.davis@email.com', phone: '(555) 345-6789', dob: '1992-11-02', lastSession: '12/20/2023', score: 8, active: false },
+    { id: 'sarah-johnson', name: 'Sarah Johnson', email: 'sarah.johnson@email.com', phone: '(555) 123-4567', dob: '1988-03-15', lastSession: '16/09/2025', score: 7, active: true },
+    { id: 'michael-chen', name: 'Michael Chen', email: 'michael.chen@email.com', phone: '(555) 234-5678', dob: '1990-07-21', lastSession: '14/09/2025', score: 5, active: true },
+    { id: 'alice-wong', name: 'Alice Wong', email: 'alice.wong@email.com', phone: '(555) 345-6789', dob: '1992-11-02', lastSession: '13/09/2025', score: 8, active: true },
     ]
     
     
@@ -31,8 +31,8 @@ export type Patient = {
     
     export const notesById: Record<string, { date: string; mood: number; tag: 'improving' | 'stable' | 'declining'; text: string; next?: string }[]> = {
     'sarah-johnson': [
-    { date: 'Wed, Jan 10, 2024', mood: 7, tag: 'improving', text: 'Patient showed significant improvement in managing anxiety. Discussed coping strategies and homework assignments.', next: '1/17/2024' },
-    { date: 'Wed, Jan 3, 2024', mood: 6, tag: 'stable', text: 'Continued work on CBT techniques. Patient reports better sleep patterns.', next: '1/10/2024' },
+    { date: 'Aug 01, 2025', mood: 3, tag: 'improving', text: 'Patient presented with persistent feelings of emptiness, reporting early morning awakenings around 4am and difficulty returning to sleep. She described low appetite, low energy, and loss of interest in painting, which she previously enjoyed. Work performance has declined due to difficulty concentrating. Patient noted withdrawing from social activities with friends, fearing she is a burden. Therapist introduced psychoeducation on depression and explained the CBT model (connection between thoughts, feelings, and behaviors). Patient was encouraged to begin a nightly journaling exercise, focusing on capturing automatic negative thoughts. Patient was engaged but tearful during the discussion, acknowledged difficulty but expressed willingness to try journaling. Homework: Daily journaling of mood and thoughts; establish a consistent bedtime routine.    ', next: '16/09/2025' },
+    { date: 'Sep 16, 2025', mood: 7, tag: 'stable', text: 'Patient described feeling slightly more hopeful after journaling consistently for a week. She shared that she reconnected with a close friend, though initially nervous, she reported feeling lighter afterwards. Still experiences difficulty focusing at work but less intense feelings of guilt. Therapist introduced behavioral activation strategies, encouraging patient to schedule pleasant activities even if motivation is low. Patient chose to commit to painting for 30 minutes twice this week. Homework: Continue journaling, implement behavioral activation, and record mood changes associated with activities.', next: '21/09/2025' },
     ],
     }
     
@@ -46,7 +46,7 @@ export type Patient = {
     { q: 'Rate your stress level (1-10):', a: '6' },
     { q: 'Do you have trouble sleeping?', a: 'Occasionally' },
     ],
-    completed: '1/9/2024',
+    completed: '15/09/2025',
     },
     {
     title: 'Depression Screening',
@@ -55,7 +55,9 @@ export type Patient = {
     { q: 'Rate your energy level (1-10):', a: '7' },
     { q: 'Do you enjoy activities?', a: 'Most of the time' },
     ],
-    completed: '1/5/2024',
+    completed: '31/08/2025',
     },
     ],
     }
+
+    

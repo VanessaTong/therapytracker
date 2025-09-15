@@ -24,7 +24,6 @@ const NavLink = ({ href, label }: { href: string; label: string }) => {
 function Brand() {
   return (
     <div className="flex items-center gap-2 px-2 py-3">
-      <div className="h-9 w-9 rounded-lg bg-blue-600" />
       <div>
         <div className="text-sm font-semibold">TherapyTracker</div>
         <div className="text-[11px] text-gray-500">Mental Health Dashboard</div>
