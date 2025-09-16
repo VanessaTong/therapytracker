@@ -55,16 +55,17 @@ export default function TherapistCalendarPage() {
     }>;
 
     const normalized: Event[] = data.map((ev) => {
-      const startDate = new Date(ev.start);
-      const endDate = new Date(ev.end);
-      return {
-        id: ev.id,
-        start: startDate,
-        end: endDate,
-        // Show "Name – Time" in the event box
-        title: `${ev.title} – ${formatDate(startDate, "h:mm a")}`,
-      };
-    });
+        // This will parse as "local" time since no timezone info is present
+        const startDate = new Date(ev.start.replace(" ", "T")); 
+        const endDate = new Date(ev.end.replace(" ", "T"));
+      
+        return {
+          id: ev.id,
+          start: startDate,
+          end: endDate,
+          title: `${ev.title} – ${formatDate(startDate, "h:mm a")}`,
+        };
+      });
 
     setEvents(normalized);
   }, []);

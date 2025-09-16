@@ -28,12 +28,12 @@ export async function GET(req: Request) {
 
     // Return strings (UTC) so the client can convert to Date objects safely
     const events = (rows as any[]).map((r: any, i: number) => ({
-      id: `${r.patient_name}-${r.starts_at_utc}-${i}`,
-      title: r.patient_name,
-      // append 'Z' because these columns are UTC (DATETIME w/o tz)
-      start: `${r.starts_at_utc}Z`,
-      end: `${r.ends_at_utc}Z`,
-    }));
+        id: `${r.patient_name}-${r.starts_at_utc}-${i}`,
+        title: r.patient_name,
+        // don’t add "Z", keep as plain string
+        start: r.starts_at_utc,
+        end: r.ends_at_utc,
+      }));
 
     return NextResponse.json(events);
   } catch (err) {
