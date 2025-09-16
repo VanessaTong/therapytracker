@@ -44,21 +44,20 @@ function extractJSON(text: string): AgentJSON | null {
 
   let s = maybeUnescapeOnce(text.trim());
 
+  // Prefer fenced content if present
   const fence = s.match(/```(?:json|javascript)?\s*([\s\S]*?)\s*```/i);
   if (fence) s = fence[1].trim();
 
+  // Remove a leading literal word "json"
   s = s.replace(/^\s*json\b/i, '').trim();
 
+  // Slice to outermost JSON ({...} or [...])
   const firstObj = s.indexOf('{');
   const firstArr = s.indexOf('[');
   let first = -1;
   if (firstObj !== -1 && firstArr !== -1) first = Math.min(firstObj, firstArr);
   else first = Math.max(firstObj, firstArr);
-
-  const lastObj = s.lastIndexOf('}');
-  const lastArr = s.lastIndexOf(']');
-  const last = Math.max(lastObj, lastArr);
-
+  const last = Math.max(s.lastIndexOf('}'), s.lastIndexOf(']'));
   if (first !== -1 && last !== -1 && last > first) {
     s = s.slice(first, last + 1).trim();
   }
@@ -74,6 +73,7 @@ function extractJSON(text: string): AgentJSON | null {
   let parsed = tryParse(s);
   if (parsed) return parsed as AgentJSON;
 
+  // Lenient pass: normalize smart quotes + strip trailing commas
   const normalized = s
     .replace(/[“”]/g, '"')
     .replace(/[‘’]/g, "'")
@@ -84,7 +84,28 @@ function extractJSON(text: string): AgentJSON | null {
   return (parsed as AgentJSON) ?? null;
 }
 
-/** ---- UI helpers ---- */
+/** Linkify http(s) and www. in plain strings (useful for "Sources"). */
+function Linkify({ text }: { text: string }) {
+  const urlRe = /(https?:\/\/[^\s)]+)|((?:www\.)[^\s)]+)/gi;
+  const parts: React.ReactNode[] = [];
+  let last = 0;
+  let m: RegExpExecArray | null;
+  while ((m = urlRe.exec(text))) {
+    const [url] = m;
+    if (m.index > last) parts.push(text.slice(last, m.index));
+    const href = url.startsWith('http') ? url : `https://${url}`;
+    parts.push(
+      <a key={m.index} href={href} target="_blank" rel="noreferrer" className="underline text-blue-600">
+        {url}
+      </a>
+    );
+    last = m.index + url.length;
+  }
+  if (last < text.length) parts.push(text.slice(last));
+  return <>{parts}</>;
+}
+
+/** ---- UI helpers (patients card kept for completeness) ---- */
 
 function alertTone(alerts: string) {
   const s = alerts?.toLowerCase?.() ?? '';
@@ -162,11 +183,12 @@ function PatientsView({ patients }: { patients: Patient[] }) {
   );
 }
 
+/** Renders your OCD guideline response */
 function GuidelineCard({ data }: { data: Guideline }) {
   const { summary, recommended_interventions, sources } = data;
-  if (!summary && !recommended_interventions && !sources) return null;
-
   const srcs = Array.isArray(sources) ? sources : sources ? [sources] : [];
+  if (!summary && !recommended_interventions?.length && !srcs.length) return null;
+
   return (
     <div className="rounded-2xl border p-4 shadow-sm bg-white">
       {summary && (
@@ -176,7 +198,7 @@ function GuidelineCard({ data }: { data: Guideline }) {
         </>
       )}
 
-      {recommended_interventions && recommended_interventions.length > 0 && (
+      {!!recommended_interventions?.length && (
         <div className="mt-3">
           <div className="text-xs font-semibold text-gray-600 mb-1">Recommended interventions</div>
           <ul className="list-disc pl-5 text-sm text-gray-900 space-y-1">
@@ -187,13 +209,11 @@ function GuidelineCard({ data }: { data: Guideline }) {
         </div>
       )}
 
-      {srcs.length > 0 && (
+      {!!srcs.length && (
         <div className="mt-3 text-xs text-gray-600">
           <span className="font-semibold">Sources: </span>
           {srcs.map((s, i) => (
-            <span key={i} className="mr-2">
-              {s}
-            </span>
+            <span key={i} className="mr-2"><Linkify text={String(s)} /></span>
           ))}
         </div>
       )}
@@ -203,14 +223,22 @@ function GuidelineCard({ data }: { data: Guideline }) {
 
 function PrettyJSON({ value }: { value: unknown }) {
   return (
-    <pre className="rounded-xl bg-gray-50 p-3 text-xs overflow-x-auto">
+    <pre className="rounded-xl bg-gray-50 p-3 text-xs whitespace-pre-wrap break-words">
       {JSON.stringify(value, null, 2)}
     </pre>
   );
 }
 
 function AgentBubble({ content, handoff }: { content: string; handoff?: string | null }) {
-  const parsed = React.useMemo(() => extractJSON(content), [content]);
+  // First parse the top-level string (often a fenced JSON string)
+  let parsed = React.useMemo(() => extractJSON(content), [content]);
+
+  // If the parsed result is an object with a nested "response" string (like your example wrapper),
+  // parse that inner string too.
+  if (parsed && typeof parsed === 'object' && 'response' in parsed && typeof (parsed as any).response === 'string') {
+    const inner = extractJSON((parsed as any).response as string);
+    if (inner) parsed = inner;
+  }
 
   const patients =
     parsed && typeof parsed === 'object' && 'patients' in parsed && Array.isArray((parsed as any).patients)
@@ -253,9 +281,7 @@ export default function AssistantPage() {
   // --- Auto-scroll ---
   const endRef = React.useRef<HTMLDivElement | null>(null);
   React.useEffect(() => {
-    // Smooth scroll on updates; instant on first paint
-    const behavior: ScrollBehavior = 'smooth';
-    endRef.current?.scrollIntoView({ behavior, block: 'end' });
+    endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
   }, [messages.length, loading]);
   // --------------------
 
@@ -331,7 +357,7 @@ export default function AssistantPage() {
         <div className="mt-3 flex items-center gap-2">
           <input
             className="flex-1 rounded-xl border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="e.g., Give me a summary of my patients"
+            placeholder="e.g., What are standard OCD treatments?"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && send()}
