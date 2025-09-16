@@ -1,7 +1,4 @@
 // app/api/chat/route.ts
-// Proxies your Next.js app to the FastAPI endpoint at /agents/chat
-// FastAPI contract: { question: string } -> { response: string, handoff?: string }
-
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
@@ -17,7 +14,6 @@ export async function POST(req: Request) {
   try {
     const body = await req.json().catch(() => ({} as any));
 
-    // Ensure we send exactly what FastAPI expects: { question: string }
     const question =
       typeof body?.question === 'string'
         ? body.question
@@ -30,7 +26,9 @@ export async function POST(req: Request) {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 45_000);
 
-    const base = process.env.FASTAPI_BASE_URL ?? 'https://therapy-api-446856640264.asia-northeast1.run.app';
+    const base =
+      process.env.FASTAPI_BASE_URL ??
+      'https://therapy-api-446856640264.asia-northeast1.run.app';
     const url = `${base.replace(/\/$/, '')}/agents/chat`;
 
     const upstream = await fetch(url, {
@@ -53,17 +51,17 @@ export async function POST(req: Request) {
     }
 
     const data = (await upstream.json().catch(() => ({}))) as {
-        response?: string;
-        handoff?: string | null;
-        [k: string]: any;
+      response?: string;
+      handoff?: string | null;
+      [k: string]: any;
     };
 
     const reply =
-        safePick(data, 'response') ??
+      (safePick(data, 'response') ??
         safePick(data, 'reply', 'message', 'output', 'text') ??
-        '' as string;
+        '') as string;
 
-    return new Response(JSON.stringify({ reply }), {
+    return new Response(JSON.stringify({ reply, handoff: data.handoff ?? null }), {
       status: 200,
       headers: { 'content-type': 'application/json' },
     });
