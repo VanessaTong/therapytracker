@@ -1,13 +1,14 @@
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+
 import { NextResponse } from "next/server";
 import { getPool } from "@/lib/db";
 
 export async function GET(req: Request) {
   try {
     const url = new URL(req.url);
-    const start = url.searchParams.get("start"); // ISO string
-    const end = url.searchParams.get("end");     // ISO string
+    const start = url.searchParams.get("start");
+    const end = url.searchParams.get("end");
 
     const pool = getPool();
 
@@ -17,7 +18,6 @@ export async function GET(req: Request) {
     `;
     const params: any[] = [];
 
-    // Limit by visible range if provided (overlap)
     if (start && end) {
       sql += ` WHERE starts_at_utc < ? AND ends_at_utc > ?`;
       params.push(end, start);
@@ -26,14 +26,12 @@ export async function GET(req: Request) {
 
     const [rows] = await pool.query(sql, params);
 
-    // Return strings (UTC) so the client can convert to Date objects safely
     const events = (rows as any[]).map((r: any, i: number) => ({
-        id: `${r.patient_name}-${r.starts_at_utc}-${i}`,
-        title: r.patient_name,
-        // don’t add "Z", keep as plain string
-        start: r.starts_at_utc,
-        end: r.ends_at_utc,
-      }));
+      id: `${r.patient_name}-${r.starts_at_utc}-${i}`,
+      title: r.patient_name,
+      start: r.starts_at_utc, // ← return exactly as DB has it
+      end: r.ends_at_utc,
+    }));
 
     return NextResponse.json(events);
   } catch (err) {
